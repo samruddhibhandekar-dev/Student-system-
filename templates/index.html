@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><title>Student System</title></head><body>
+<h1>Student Management</h1>
+<form action="/add" method="POST">
+<input type="text" name="name" placeholder="Name" required>
+<input type="number" name="roll" placeholder="Roll No" required>
+<button>Add</button>
+</form><hr>
+{% for s in students %}
+<p>{{s.roll}} - {{s.name}} <a href="/edit/{{s.roll}}">Edit</a> <a href="/delete/{{s.roll}}">Delete</a></p>
+{% endfor %}
+</body></html>
