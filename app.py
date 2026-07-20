@@ -1,37 +1,45 @@
 from flask import Flask, render_template, request, redirect, url_for
+import sqlite3
 
 app = Flask(__name__)
 
-students = []  # Temporary list
+def get_db():
+    conn = sqlite3.connect('students.db')
+    return conn
 
 @app.route('/')
-def home():
+def index():
+    conn = get_db()
+    students = conn.execute('SELECT * FROM students').fetchall()
+    conn.close()
     return render_template('index.html', students=students)
 
 @app.route('/add', methods=['POST'])
-def add_student():
+def add():
     name = request.form['name']
-    roll = int(request.form['roll'])
-    students.append({'name': name, 'roll': roll})
-    return redirect(url_for('home'))
+    roll = request.form['roll']
+    conn = get_db()
+    conn.execute('INSERT INTO students (name, roll) VALUES (?, ?)', (name, roll))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
 
-@app.route('/delete/<int:roll_no>')
-def delete_student(roll_no):
-    global students
-    students = [s for s in students if s['roll'] != roll_no]
-    return redirect(url_for('home'))
-
-@app.route('/edit/<int:roll_no>', methods=['GET', 'POST'])
-def edit_student(roll_no):
-    global students
-    student = next((s for s in students if s['roll'] == roll_no), None)
-    
-    if request.method == 'POST':
-        student['name'] = request.form['name']
-        student['roll'] = int(request.form['roll'])
-        return redirect(url_for('home'))
-    
+@app.route('/edit/<int:id>')
+def edit(id):
+    conn = get_db()
+    student = conn.execute('SELECT * FROM students WHERE id = ?', (id,)).fetchone()
+    conn.close()
     return render_template('edit.html', student=student)
+
+@app.route('/update/<int:id>', methods=['POST'])
+def update(id):
+    name = request.form['name']
+    roll = request.form['roll']
+    conn = get_db()
+    conn.execute('UPDATE students SET name = ?, roll = ? WHERE id = ?', (name, roll, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
